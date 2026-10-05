@@ -220,14 +220,14 @@ async function findSphere(token) {
 
 function focusFor(t) {
   if (state.manual) return state.manual;
-  if (state.sceneFallback) return { cx: .5, cy: .5, rx: .5, ry: .5 };   // the whole scene
+  if (state.sceneFallback) return { cx: .5, cy: .5, rx: .5, ry: .5, full: true };   // the whole scene, corners included
   return state.report && state.report.status === 'ok' ? EchoDetect.focusAt(state.report, t) : null;
 }
 
 function readMood() {
   const perFrame = state.frames.map((f) => {
     const e = focusFor(f.time);
-    return EchoMood.readPalette(f, { cx: e.cx * f.width, cy: e.cy * f.height, rx: e.rx * f.width, ry: e.ry * f.height });
+    return EchoMood.readPalette(f, { cx: e.cx * f.width, cy: e.cy * f.height, rx: e.rx * f.width, ry: e.ry * f.height, full: e.full });
   });
   state.decision = EchoMood.decide(EchoMood.meanScores(perFrame));
   state.timeline = buildTimeline(perFrame);
@@ -311,7 +311,7 @@ function presentAnalysis() {
 // the pipeline reads video mood, and the sphere is one way to read it, not the only one.
 // An unclear scene keeps the old behavior (mark the sphere yourself).
 function trySceneFallback() {
-  const perFrame = state.frames.map((f) => EchoMood.readPalette(f, { cx: f.width / 2, cy: f.height / 2, rx: f.width / 2, ry: f.height / 2 }));
+  const perFrame = state.frames.map((f) => EchoMood.readPalette(f, { cx: f.width / 2, cy: f.height / 2, rx: f.width / 2, ry: f.height / 2, full: true }));
   if (!EchoMood.decide(EchoMood.meanScores(perFrame)).mood) return false;
   state.sceneFallback = true;
   $('detectionNote').textContent = 'No sphere was found, so the whole scene was read instead (green outline). If there is a sphere in the video, mark it yourself.';
@@ -373,6 +373,7 @@ function startDrawing() {
 
 function setManual(ellipse) {
   state.manual = ellipse;
+  state.sceneFallback = false;
   state.draft = null;
   state.drawing = false;
   stage.classList.remove('drawing');
@@ -644,9 +645,9 @@ function stop() {
 }
 
 // ---- exporting the video with its song --------------------------------------------------------------------------
-// Records the composite canvas (video + "what was read" overlay) and taps the
-// master bus, so the file hears exactly what the speakers play: crossfades,
-// leveling and envelope included.
+// Records the video frames to a canvas and taps the master bus, so the file
+// hears exactly what the speakers play: crossfades, leveling and envelope
+// included. The export is clean video — no detection overlay.
 
 let exporting = null;
 
@@ -662,7 +663,6 @@ function drawExportFrame() {
   if (!exporting || !exporting.ctx) return;
   const { canvas, ctx } = exporting;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  if ($('showOverlay').checked) ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
   if (state.duration) $('exportBar').style.width = `${Math.min(100, video.currentTime / state.duration * 100)}%`;
 }
 
@@ -702,7 +702,7 @@ async function exportVideo() {
   } catch { dest = null; }
 
   const vw = video.videoWidth || 1280, vh = video.videoHeight || 720;
-  const scale = Math.min(1, 1280 / vw);
+  const scale = Math.min(1, 1920 / vw);
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(2, Math.round(vw * scale));
   canvas.height = Math.max(2, Math.round(vh * scale));
@@ -717,7 +717,7 @@ async function exportVideo() {
 
   const mime = pickExportMime();
   const rec = new MediaRecorder(new MediaStream([vtrack, ...(audioTrack ? [audioTrack] : [])]),
-    mime ? { mimeType: mime, videoBitsPerSecond: 5_000_000 } : undefined);
+    mime ? { mimeType: mime, videoBitsPerSecond: 10_000_000, audioBitsPerSecond: 192_000 } : undefined);
   const chunks = [];
   rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
   const stopped = new Promise((res) => { rec.onstop = res; });
@@ -730,7 +730,7 @@ async function exportVideo() {
 
   try { video.currentTime = 0; } catch { /* play() seeks anyway */ }
   try {
-    rec.start(250);
+    rec.start();   // no timeslice: one clean blob means valid MP4 structure
   } catch {
     exporting = null;
     teardownExportTracks({ dest, vtrack, audioTrack });
@@ -749,6 +749,113 @@ async function exportVideo() {
   }
 }
 
+// MediaRecorder omits Duration from WebM output; without it most players
+// disable seeking entirely. This patches the correct duration into the
+// EBML header. Never throws: falls back to the original blob when the
+// structure isn't understood.
+async function fixWebMDuration(blob, durationMs) {
+  try {
+    const buf = new Uint8Array(await blob.arrayBuffer());
+
+    const readVint = (pos, asId) => {
+      if (pos >= buf.length) return null;
+      let len = 1;
+      while (len <= 8 && !(buf[pos] & (0x80 >> (len - 1)))) len++;
+      if (len > 8 || pos + len > buf.length) return null;
+      let val = 0;
+      if (asId) {
+        for (let i = 0; i < len; i++) val = val * 256 + buf[pos + i];
+      } else {
+        val = buf[pos] & (0xFF >> len);
+        for (let i = 1; i < len; i++) val = val * 256 + buf[pos + i];
+        if (val === Math.pow(2, 7 * len) - 1) val = -1;   // unknown size
+      }
+      return { len, val };
+    };
+
+    // Find the Segment element (0x18538067).
+    let pos = 0, segDataStart = -1, segDataEnd = -1;
+    while (pos < buf.length) {
+      const id = readVint(pos, true);
+      if (!id) break;
+      const size = readVint(pos + id.len, false);
+      if (!size) break;
+      if (id.val === 0x18538067) {
+        segDataStart = pos + id.len + size.len;
+        segDataEnd = size.val === -1 ? buf.length : segDataStart + size.val;
+        break;
+      }
+      if (size.val === -1) break;
+      pos += id.len + size.len + size.val;
+    }
+    if (segDataStart < 0) return blob;
+
+    // Find Info (0x1549A966) within the Segment.
+    pos = segDataStart;
+    let infoPos = -1, infoLen = -1, infoSizeLen = -1, infoSizeVal = -1;
+    while (pos + 4 <= segDataEnd) {
+      const id = readVint(pos, true);
+      if (!id) break;
+      const size = readVint(pos + id.len, false);
+      if (!size) break;
+      if (id.val === 0x1549A966) {
+        infoPos = pos; infoLen = id.len; infoSizeLen = size.len; infoSizeVal = size.val;
+        break;
+      }
+      if (size.val === -1 || id.val === 0x1F43B675) break;   // Cluster: past Info
+      pos += id.len + size.len + size.val;
+    }
+    if (infoPos < 0 || infoSizeVal < 0) return blob;
+
+    // Walk Info children for TimecodeScale (0x2AD7B1) and Duration (0x4489).
+    const infoDataStart = infoPos + infoLen + infoSizeLen;
+    const infoDataEnd = infoDataStart + infoSizeVal;
+    let timecodeScale = 1000000, durPos = -1, durSizeLen = -1, durDataLen = -1;
+    pos = infoDataStart;
+    while (pos + 2 <= infoDataEnd && pos < buf.length) {
+      const id = readVint(pos, true);
+      if (!id) break;
+      const size = readVint(pos + id.len, false);
+      if (!size || size.val < 0) break;
+      if (id.val === 0x2AD7B1) {
+        timecodeScale = 0;
+        for (let i = 0; i < size.val; i++) timecodeScale = timecodeScale * 256 + buf[pos + id.len + size.len + i];
+      } else if (id.val === 0x4489) {
+        durPos = pos; durSizeLen = size.len; durDataLen = size.val;
+      }
+      pos += id.len + size.len + size.val;
+    }
+    if (!timecodeScale) return blob;
+
+    const f64 = new Uint8Array(8);
+    new DataView(f64.buffer).setFloat64(0, durationMs * 1e6 / timecodeScale, false);
+
+    if (durPos >= 0) {
+      if (durDataLen !== 8) return blob;
+      const out = new Uint8Array(buf);
+      out.set(f64, durPos + 2 + durSizeLen);
+      return new Blob([out], { type: blob.type });
+    }
+
+    // Insert a new Duration element at the start of Info, then grow Info's size.
+    const durEl = new Uint8Array([0x44, 0x89, 0x88, ...f64]);
+    const newBuf = new Uint8Array(buf.length + durEl.length);
+    newBuf.set(buf.subarray(0, infoDataStart), 0);
+    newBuf.set(durEl, infoDataStart);
+    newBuf.set(buf.subarray(infoDataStart), infoDataStart + durEl.length);
+    const newInfoSize = infoSizeVal + durEl.length;
+    if (newInfoSize >= Math.pow(2, 7 * infoSizeLen)) return blob;
+    let v = newInfoSize;
+    const sizeBytes = new Uint8Array(infoSizeLen);
+    for (let i = infoSizeLen - 1; i >= 0; i--) { sizeBytes[i] = v & 0xFF; v = Math.floor(v / 256); }
+    sizeBytes[0] |= (0x80 >> (infoSizeLen - 1));
+    newBuf.set(sizeBytes, infoPos + infoLen);
+    return new Blob([newBuf], { type: blob.type });
+  } catch {
+    return blob;
+  }
+}
+
 async function finishExport() {
   const ex = exporting;
   exporting = null;
@@ -762,7 +869,8 @@ async function finishExport() {
     return;
   }
   const ext = ex.mime.includes('mp4') ? 'mp4' : 'webm';
-  const blob = new Blob(ex.chunks, { type: ex.mime || 'video/webm' });
+  let blob = new Blob(ex.chunks, { type: ex.mime || 'video/webm' });
+  if (ext === 'webm' && state.duration) blob = await fixWebMDuration(blob, state.duration * 1000);
   const a = document.createElement('a');
   const d = new Date(), p = (n) => String(n).padStart(2, '0');
   a.href = URL.createObjectURL(blob);
@@ -823,7 +931,7 @@ $('changeButton').addEventListener('click', () => $('fileInput').click());
 $('fileInput').addEventListener('change', (e) => { const f = e.target.files[0]; e.target.value = ''; handleFile(f); });
 $('drawButton').addEventListener('click', () => { startDrawing(); drawOverlay(); message('Drag from the middle of the sphere out to its edge.'); });
 $('wholeButton').addEventListener('click', () => setManual({ cx: .5, cy: .5, rx: .48, ry: .48 }));
-$('autoButton').addEventListener('click', () => { state.manual = null; presentAnalysis(); });
+$('autoButton').addEventListener('click', () => { state.manual = null; state.sceneFallback = false; presentAnalysis(); });
 $('showOverlay').addEventListener('change', drawOverlay);
 window.addEventListener('resize', drawOverlay, { passive: true });
 $('calmToggle').addEventListener('click', () => setQuiet(!calmMode));

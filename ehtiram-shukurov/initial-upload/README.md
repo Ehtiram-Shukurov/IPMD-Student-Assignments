@@ -20,8 +20,8 @@ Upload a video of the EchoSphere robot → it finds the glowing sphere, reads th
 
 ## What's in this folder
 
-`echosphere-music/` is a snapshot of the project (main branch). Two files were too large for the upload tool and are excluded, but live in the source repo:
-- `music-page.html` (7.2 MB standalone composer page — not part of this pipeline)
-- `tests/js/fixtures/palette-cases.json` (394 KB test fixture)
+`echosphere-music/` is a snapshot of the project (main branch): the browser app (`video-music/`), the server version, the tests and the docs, with the music library's manifest and credits.
 
-The `music-library/*.mp3` files (475 MB) are also excluded; `music-library/manifest.json` (included) describes every track.
+The song files (`music-library/*.mp3`, 76 songs, about 500 MB) are **not** copied here because this repository is shared. They are in the source repo: https://github.com/Ehtiram-Shukurov/echosphere-music/tree/main/music-library. `music-library/manifest.json` (included) describes every track and its beat positions, and the live demo above plays them.
+
+To run the page locally with songs, clone the source repo instead.
