@@ -17,6 +17,8 @@ Upload a video of the EchoSphere robot → it finds the glowing sphere, reads th
 - **Export video** — records the video with its soundtrack as a downloadable MP4: clean picture (no detection outlines), up to 1080p, seekable.
 - **Scene fallback** — if the sphere can't be found, the whole scene is read, but only when its colors clearly point to one mood.
 - **Docs** — brought README, guide, and browser docs up to date.
+- **Feedback fixes** — the fourth mood is now called Dynamic (its id and folder stay `anger`), and exported videos carry the song credit along the bottom, as CC BY 4.0 requires.
+- **Handover note** — `echosphere-music/docs/HANDOVER.md` explains how to run, test and continue the project.
 
 ## What's in this folder
 
