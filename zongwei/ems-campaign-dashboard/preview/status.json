@@ -1,0 +1,228 @@
+{
+  "totals": {
+    "sent": 26,
+    "not_sent": 2,
+    "opened": 3,
+    "clicked": 1,
+    "unsubscribed": 3,
+    "unsubscribed_attributed": 2,
+    "unsubscribed_unattributed": 1
+  },
+  "campaigns": [
+    {
+      "campaign_id": 5,
+      "campaign_name": "follow_kickstarter",
+      "campaign_status": "sent",
+      "sent": 4,
+      "not_sent": 0,
+      "opened": 0,
+      "clicked": 0,
+      "unsubscribed": 0,
+      "tracked_rows": 0,
+      "first_sent_at": "2026-11-01T16:01:00.000Z",
+      "last_sent_at": "2026-11-01T16:04:00.000Z",
+      "stored_total_sent": 0,
+      "stored_total_opened": 0,
+      "stored_total_clicked": 0,
+      "stored_totals_stale": true
+    },
+    {
+      "campaign_id": 4,
+      "campaign_name": "launch_instructions",
+      "campaign_status": "sent",
+      "sent": 5,
+      "not_sent": 1,
+      "opened": 0,
+      "clicked": 0,
+      "unsubscribed": 0,
+      "tracked_rows": 0,
+      "first_sent_at": "2026-10-29T16:01:00.000Z",
+      "last_sent_at": "2026-10-29T16:06:00.000Z",
+      "stored_total_sent": 0,
+      "stored_total_opened": 0,
+      "stored_total_clicked": 0,
+      "stored_totals_stale": true
+    },
+    {
+      "campaign_id": 1,
+      "campaign_name": "still_live",
+      "campaign_status": "sent",
+      "sent": 6,
+      "not_sent": 0,
+      "opened": 0,
+      "clicked": 0,
+      "unsubscribed": 1,
+      "tracked_rows": 0,
+      "first_sent_at": "2026-10-20T16:01:00.000Z",
+      "last_sent_at": "2026-10-20T16:06:00.000Z",
+      "stored_total_sent": 0,
+      "stored_total_opened": 0,
+      "stored_total_clicked": 0,
+      "stored_totals_stale": true
+    },
+    {
+      "campaign_id": 3,
+      "campaign_name": "vip_private_link",
+      "campaign_status": "sent",
+      "sent": 5,
+      "not_sent": 1,
+      "opened": 1,
+      "clicked": 0,
+      "unsubscribed": 1,
+      "tracked_rows": 1,
+      "first_sent_at": "2026-10-26T16:01:00.000Z",
+      "last_sent_at": "2026-10-26T16:06:00.000Z",
+      "stored_total_sent": 0,
+      "stored_total_opened": 0,
+      "stored_total_clicked": 0,
+      "stored_totals_stale": true
+    },
+    {
+      "campaign_id": 2,
+      "campaign_name": "we_are_live",
+      "campaign_status": "sent",
+      "sent": 6,
+      "not_sent": 0,
+      "opened": 2,
+      "clicked": 1,
+      "unsubscribed": 0,
+      "tracked_rows": 2,
+      "first_sent_at": "2026-10-23T16:01:00.000Z",
+      "last_sent_at": "2026-10-23T16:06:00.000Z",
+      "stored_total_sent": 0,
+      "stored_total_opened": 0,
+      "stored_total_clicked": 0,
+      "stored_totals_stale": true
+    }
+  ],
+  "emails": [
+    {
+      "campaign_id": 5,
+      "email_type": "follow",
+      "variant": "a",
+      "campaign_name": "follow_kickstarter",
+      "campaign_status": "sent",
+      "sent": 4,
+      "not_sent": 0,
+      "opened": 0,
+      "clicked": 0,
+      "unsubscribed": 0,
+      "tracked_rows": 0,
+      "first_sent_at": "2026-11-01T16:01:00.000Z",
+      "last_sent_at": "2026-11-01T16:04:00.000Z"
+    },
+    {
+      "campaign_id": 4,
+      "email_type": "instructions",
+      "variant": "a",
+      "campaign_name": "launch_instructions",
+      "campaign_status": "sent",
+      "sent": 5,
+      "not_sent": 1,
+      "opened": 0,
+      "clicked": 0,
+      "unsubscribed": 0,
+      "tracked_rows": 0,
+      "first_sent_at": "2026-10-29T16:01:00.000Z",
+      "last_sent_at": "2026-10-29T16:06:00.000Z"
+    },
+    {
+      "campaign_id": 1,
+      "email_type": "reminder",
+      "variant": "a",
+      "campaign_name": "still_live",
+      "campaign_status": "sent",
+      "sent": 6,
+      "not_sent": 0,
+      "opened": 0,
+      "clicked": 0,
+      "unsubscribed": 1,
+      "tracked_rows": 0,
+      "first_sent_at": "2026-10-20T16:01:00.000Z",
+      "last_sent_at": "2026-10-20T16:06:00.000Z"
+    },
+    {
+      "campaign_id": 3,
+      "email_type": "vip",
+      "variant": "a",
+      "campaign_name": "vip_private_link",
+      "campaign_status": "sent",
+      "sent": 5,
+      "not_sent": 1,
+      "opened": 1,
+      "clicked": 0,
+      "unsubscribed": 1,
+      "tracked_rows": 1,
+      "first_sent_at": "2026-10-26T16:01:00.000Z",
+      "last_sent_at": "2026-10-26T16:06:00.000Z"
+    },
+    {
+      "campaign_id": 2,
+      "email_type": "announcement",
+      "variant": "a",
+      "campaign_name": "we_are_live",
+      "campaign_status": "sent",
+      "sent": 3,
+      "not_sent": 0,
+      "opened": 1,
+      "clicked": 1,
+      "unsubscribed": 0,
+      "tracked_rows": 1,
+      "first_sent_at": "2026-10-23T16:01:00.000Z",
+      "last_sent_at": "2026-10-23T16:05:00.000Z"
+    },
+    {
+      "campaign_id": 2,
+      "email_type": "announcement",
+      "variant": "b",
+      "campaign_name": "we_are_live",
+      "campaign_status": "sent",
+      "sent": 3,
+      "not_sent": 0,
+      "opened": 1,
+      "clicked": 0,
+      "unsubscribed": 0,
+      "tracked_rows": 1,
+      "first_sent_at": "2026-10-23T16:02:00.000Z",
+      "last_sent_at": "2026-10-23T16:06:00.000Z"
+    }
+  ],
+  "quality": {
+    "send_log_rows": 28,
+    "sent_rows": 26,
+    "analytics_rows": 3,
+    "unsubscribed_users": 3,
+    "unattributed_unsubscribes": 1,
+    "suppression_rows": 5,
+    "suppressed_not_marked_unsubscribed": 3
+  },
+  "statuses": [
+    {
+      "status": "sent",
+      "rows": 26
+    },
+    {
+      "status": "failed",
+      "rows": 2
+    }
+  ],
+  "reasons": [
+    {
+      "reason": "hard_bounce",
+      "rows": 2
+    },
+    {
+      "reason": "unsubscribe",
+      "rows": 2
+    },
+    {
+      "reason": "imported",
+      "rows": 1
+    }
+  ],
+  "sentStatuses": [
+    "sent",
+    "delivered",
+    "success"
+  ]
+}
